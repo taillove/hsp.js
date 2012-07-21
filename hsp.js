@@ -44,8 +44,6 @@ var hsp = {
 
 	screen: function(id, w, h)
 	{
-		hsp.ginfo.winx = w;
-		hsp.ginfo.winy = h;
 		hsp.duration_ = 0;
 		hsp.last_redraw_ = 0;
 		hsp.x_ = 0;
@@ -66,6 +64,14 @@ var hsp = {
 		hsp.maindiv_.style.height = h;
 		hsp.maindiv_.style.textAlign = 'left';
 		hsp.maindiv_.style.cursor = 'default';
+
+		// set ginfo
+		var rect = hsp.maindiv_.getBoundingClientRect();
+		w = rect.right - rect.left;
+		h = rect.bottom - rect.top;
+
+		hsp.ginfo.winx = w;
+		hsp.ginfo.winy = h;
 
 		// ui surface
 		hsp.ui_ = document.createElement('div');
@@ -136,14 +142,46 @@ var hsp = {
 			hsp.key_[i] = false;
 		}
 
-		window.onkeydown = function(event) {
+		window.onkeydown = function(event)
+		{
 			hsp.key_[event.keyCode] = true;
 			return true;
 		};
 		
-		window.onkeyup = function(event) {
+		window.onkeyup = function(event)
+		{
 			hsp.key_[event.keyCode] = false;
 			return true;
+		};
+
+		// for iPhone, iPad
+		hsp.canvas_.ontouchstart = function(event)
+		{
+			hsp.mouse.l = true;
+			event.preventDefault();
+			return false;
+		};
+
+		window.ontouchmove = function(event)
+		{
+			var rect = hsp.canvas_.getBoundingClientRect();
+			var posx = event.touches[0].pageX;
+			var posy = event.touches[0].pageY;
+			posx += document.documentElement.scrollLeft;
+			posy += document.documentElement.scrollTop;
+			posx -= rect.left;
+			posy -= rect.top;
+			hsp.mouse.x = posx;
+			hsp.mouse.y = posy;
+			event.preventDefault();
+			return false;
+		};
+
+		window.ontouchend = function(event)
+		{
+			event.preventDefault();
+			hsp.mouse.l = false;
+			return false;
 		};
 	},
 
@@ -169,6 +207,8 @@ var hsp = {
 		if ( type == 0 )
 		{
 			hsp.ctx = hsp.buffer_.ctx;
+			if ( hsp.last_redraw_ == 0 ) { return; }
+			hsp.buffer_.ctx.putImageData( hsp.canvas_.ctx.getImageData( 0, 0, hsp.ginfo.winx, hsp.ginfo.winy ), 0, 0 );
 		}
 		if ( type == 1 )
 		{
@@ -225,6 +265,39 @@ var hsp = {
 		hsp.ctx.fillStyle = colstr;
 		hsp.ctx.strokeStyle = colstr;
 		if ( a !== undefined ) { hsp.ctx.globalAlpha = a / 256; }
+	},
+
+	hsvcolor: function( h, s, v )
+	{
+		v = Math.min( Math.max(v, 0), 255 );
+
+		if (h < 0) {
+			h = 192 - (~~(-h) % 192);
+		} else {
+			h = ~~(h) % 192;
+		}
+
+		if (s == 0)
+		{
+			hsp.color( v, v, v );
+		}
+		
+		s = Math.min( Math.max(s, 0), 255 ) / 255;
+		var i = (~~(h) / 32) % 6,
+			f = (h / 32) - i,
+			p = v * (1 - s),
+			q = v * (1 - f * s),
+			t = v * (1 - (1 - f) * s)
+
+		switch (i)
+		{
+		case 0: hsp.color( v, t, p ); break;
+		case 1: hsp.color( q, v, p ); break;
+		case 2: hsp.color( p, v, t ); break;
+		case 3: hsp.color( p, q, v ); break;
+		case 4: hsp.color( t, p, v ); break;
+		case 5: hsp.color( v, p, q ); break;
+		}
 	},
 
 	pos: function(x, y)
@@ -393,6 +466,10 @@ var hsp = {
 			elem.style.top  = elem.oy + rect.top;
 			i++
 		}
+
+		var rect = hsp.canvas_.getBoundingClientRect();
+		hsp.ginfo.winx = rect.right - rect.left;
+		hsp.ginfo.winy = rect.bottom - rect.top;
 	},
 
 	set_elem_: function( elem )
@@ -435,20 +512,25 @@ var hsp = {
 
 	mmplay: function( id )
 	{
-//		hsp.mmslot_[id].pause();
-//		hsp.mmslot_[id].currentTime = 0;
+		hsp.mmstop( id );
 		hsp.mmslot_[id].play();
 	},
 
 	mmstop: function( id )
 	{
-		hsp.mmslot_[id].pause();
-		hsp.mmslot_[id].currentTime = 0;
+		var se = hsp.mmslot_[id];
+		if ( !se.ended )
+		{
+			se.pause();
+			se.currentTime = 0;
+		}
 	},
 
 	gosub: function( f )
 	{
 		f();
 	},
+
+
 }
 

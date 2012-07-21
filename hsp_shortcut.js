@@ -31,6 +31,7 @@ var circle	= hsp.circle;
 var clrobj	= hsp.clrobj;
 var cls		= hsp.cls;
 var color	= hsp.color;
+var hsvcolor= hsp.hsvcolor;
 var font	= hsp.font;
 var gcopy	= hsp.gcopy;
 var getkey	= hsp.getkey;
