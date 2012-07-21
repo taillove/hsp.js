@@ -466,10 +466,6 @@ var hsp = {
 			elem.style.top  = elem.oy + rect.top;
 			i++
 		}
-
-		var rect = hsp.canvas_.getBoundingClientRect();
-		hsp.ginfo.winx = rect.right - rect.left;
-		hsp.ginfo.winy = rect.bottom - rect.top;
 	},
 
 	set_elem_: function( elem )
