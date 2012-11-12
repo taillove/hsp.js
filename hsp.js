@@ -41,11 +41,9 @@ var hsp = {
 		r: false,
 	},
 	
-
 	screen: function(id, w, h)
 	{
 		hsp.duration_ = 0;
-		hsp.last_redraw_ = 0;
 		hsp.x_ = 0;
 		hsp.y_ = 0;
 		hsp.w_ = 32;
@@ -84,9 +82,10 @@ var hsp = {
 		hsp.canvas_.height = h;
 		hsp.canvas_.style.width  = w;
 		hsp.canvas_.style.height = h;
-		hsp.canvas_.style.border = "1px solid white";
 		hsp.canvas_.style.cursor = 'default';
+		hsp.canvas_.style.margin = 'auto';
 		hsp.maindiv_.appendChild( hsp.canvas_ );
+		hsp.images_[0] = hsp.canvas_;
 
 		// off-screen surface
 		hsp.buffer_ = document.createElement('canvas');
@@ -204,6 +203,7 @@ var hsp = {
 
 	redraw: function( type )
 	{
+/*
 		if ( type == 0 )
 		{
 			hsp.ctx = hsp.buffer_.ctx;
@@ -217,6 +217,7 @@ var hsp = {
 			hsp.ctx = hsp.canvas_.ctx;
 		}
 		hsp.last_redraw_ = type;
+*/
 	},
 
 	picload: function( id, url )
@@ -235,7 +236,7 @@ var hsp = {
 	{
 		switch( mode )
 		{
-			case 0: mode = 'copy'; break;
+			case 0: mode = 'copy'; break; // warning: undesired clipping. use only with gcopy.
 			case 1: mode = 'source-over'; break;
 			case 2: mode = 'source-over'; break;
 			case 3: mode = 'source-over'; break;
@@ -259,6 +260,72 @@ var hsp = {
 		hsp.ctx.drawImage( hsp.images_[id], x, y, w, h, hsp.x_, hsp.y_, w, h);
 	},
 
+	fillTriangle_: function( x0, y0, x1, y1, x2, y2 )
+	{
+		hsp.ctx.beginPath();
+		hsp.ctx.moveTo(x0, y0);
+		hsp.ctx.lineTo(x1, y1);
+		hsp.ctx.lineTo(x2, y2);
+		hsp.ctx.fill();
+	},
+
+	fillTexTriangle_: function( im, x0, y0, x1, y1, x2, y2, u0, v0, u1, v1, u2, v2 )
+	{
+		var eu0 = u1 - u0;
+		var eu1 = u2 - u1;
+		var eu2 = u0 - u2;
+		var ev0 = v1 - v0;
+		var ev1 = v2 - v1;
+		var ev2 = v0 - v2;
+		var c0 = u2*v1 - v2*u1;
+		var c1 = u0*v2 - v0*u2;
+		var c2 = u1*v0 - v1*u0;
+		var invd = 1.0 / (u0*ev1 + u1*ev2 + u2*ev0);
+
+		hsp.ctx.save();
+		hsp.ctx.beginPath();
+		hsp.ctx.moveTo(x0, y0);
+		hsp.ctx.lineTo(x1, y1);
+		hsp.ctx.lineTo(x2, y2);
+		hsp.ctx.closePath();
+		hsp.ctx.clip();
+
+		hsp.ctx.setTransform(
+			(x0 * ev1 + x1 * ev2 + x2 * ev0) * invd,
+			(y0 * ev1 + y1 * ev2 + y2 * ev0) * invd,
+			(x0 * eu1 + x1 * eu2 + x2 * eu0) * -invd,
+			(y0 * eu1 + y1 * eu2 + y2 * eu0) * -invd,
+			(x0 * c0  + x1 * c1  + x2 * c2 ) * invd,
+			(y0 * c0  + y1 * c1  + y2 * c2 ) * invd
+		);
+		hsp.ctx.drawImage(im, 0, 0);
+		hsp.ctx.restore();
+	},
+
+	gsquare: function( id, xs, ys, us, vs )
+	{
+		if ( id < 0 )
+		{
+			hsp.fillTriangle_( xs[0], ys[0], xs[1], ys[1], xs[2], ys[2] );
+			hsp.fillTriangle_( xs[0], ys[0], xs[2], ys[2], xs[3], ys[3] );
+		} else {
+			hsp.fillTexTriangle_( hsp.images_[id], xs[0], ys[0], xs[1], ys[1], xs[2], ys[2], us[0], vs[0], us[1], vs[1], us[2], vs[2] );
+			hsp.fillTexTriangle_( hsp.images_[id], xs[0], ys[0], xs[2], ys[2], xs[3], ys[3], us[0], vs[0], us[2], vs[2], us[3], vs[3] );
+		}
+	},
+
+	grotate: function( id, u, v, rad, sx, sy )
+	{
+		if ( sx === undefined ) { sx = hsp.w_; }
+		if ( sy === undefined ) { sy = hsp.h_; }
+		hsp.ctx.save();
+		hsp.ctx.translate(hsp.x_, hsp.y_);
+		hsp.ctx.rotate(rad);
+		hsp.ctx.translate(sx*-0.5, sy*-0.5);
+		hsp.ctx.drawImage( hsp.images_[id], u, v, u+hsp.w_, v+hsp.h_, 0, 0, sx, sy );
+		hsp.ctx.restore();
+	},
+
 	color: function(r, g, b, a)
 	{
 		var colstr = 'rgb(' + ~~(r) + ',' + ~~(g) + ',' + ~~(b) + ')';
@@ -267,7 +334,7 @@ var hsp = {
 		if ( a !== undefined ) { hsp.ctx.globalAlpha = a / 256; }
 	},
 
-	hsvcolor: function( h, s, v )
+	hsvcolor: function(h, s, v, a)
 	{
 		v = Math.min( Math.max(v, 0), 255 );
 
@@ -279,7 +346,7 @@ var hsp = {
 
 		if (s == 0)
 		{
-			hsp.color( v, v, v );
+			hsp.color( v, v, v, a );
 		}
 		
 		s = Math.min( Math.max(s, 0), 255 ) / 255;
@@ -291,12 +358,12 @@ var hsp = {
 
 		switch (i)
 		{
-		case 0: hsp.color( v, t, p ); break;
-		case 1: hsp.color( q, v, p ); break;
-		case 2: hsp.color( p, v, t ); break;
-		case 3: hsp.color( p, q, v ); break;
-		case 4: hsp.color( t, p, v ); break;
-		case 5: hsp.color( v, p, q ); break;
+		case 0: hsp.color( v, t, p, a ); break;
+		case 1: hsp.color( q, v, p, a ); break;
+		case 2: hsp.color( p, v, t, a ); break;
+		case 3: hsp.color( p, q, v, a ); break;
+		case 4: hsp.color( t, p, v, a ); break;
+		case 5: hsp.color( v, p, q, a ); break;
 		}
 	},
 
@@ -348,15 +415,17 @@ var hsp = {
 		}
 		else
 		{
+			hsp.ctx.closePath();
 			hsp.ctx.stroke();
 		}
 	},
 
-	cls: function( color )
+	cls: function( color, alpha )
 	{
+		if ( alpha === undefined ) { alpha = 1; }
 		hsp.ctx.save();
+		hsp.ctx.globalAlpha = alpha;
 		hsp.ctx.fillStyle = color;
-		hsp.ctx.beginPath();
 		hsp.ctx.fillRect(0, 0, hsp.ginfo.winx, hsp.ginfo.winy);
 		hsp.ctx.restore();
 	},
@@ -379,7 +448,6 @@ var hsp = {
 		if ( y1 === undefined ) { y1 = 0; }
 		if ( x2 === undefined ) { x2 = hsp.ginfo.winx-1; }
 		if ( y2 === undefined ) { y2 = hsp.ginfo.winy-1; }
-		hsp.ctx.beginPath();
 		hsp.ctx.fillRect(x1, y1, x2-x1+1, y2-y1+1);
 	},
 
@@ -526,7 +594,5 @@ var hsp = {
 	{
 		f();
 	},
-
-
 }
 
