@@ -26,6 +26,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // standard functions
 var boxf	= hsp.boxf;
 var button	= hsp.button;
+var bload	= hsp.bload;
+var bsave	= hsp.bsave;
 var chkbox	= hsp.chkbox;
 var circle	= hsp.circle;
 var clrobj	= hsp.clrobj;
@@ -54,10 +56,6 @@ var redraw	= hsp.redraw;
 var rnd		= hsp.rnd;
 var screen	= hsp.screen;
 
-// original functions
-var alpha	= hsp.alpha;
-var setmain	= hsp.setmain;
-
 // variables
 var ginfo	= hsp.ginfo;
 
@@ -69,4 +67,9 @@ var atan	= function(y, x) { return Math.atan2(x, y); }
 var sqrt	= Math.sqrt;
 var int		= parseInt;
 var double	= parseFloat;
+
+// original functions
+var alpha	= hsp.alpha;
+var setmain	= hsp.setmain;
+
 

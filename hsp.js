@@ -41,7 +41,7 @@ var hsp = {
 		r: false,
 	},
 	
-	screen: function(id, w, h)
+	screen: function(id, w, h, color)
 	{
 		hsp.duration_ = 0;
 		hsp.x_ = 0;
@@ -50,8 +50,6 @@ var hsp = {
 		hsp.h_ = 32;
 		hsp.objw_ = 64;
 		hsp.objh_ = 24;
-		hsp.fontsize_ = 16;
-		hsp.fontface_ = "sans-serif";
 		hsp.maintimer_ = null;
 		hsp.mainfunc_ = null;
 
@@ -97,6 +95,10 @@ var hsp = {
 
 		// direct drawing
 		hsp.ctx = hsp.canvas_.ctx;
+		hsp.font( "monospace", 16 );
+
+		if ( color === undefined ) { color = 'white'; }
+		hsp.cls( color );
 
 		// add event handlers
 		hsp.canvas_.onmousedown = function(e)
@@ -428,6 +430,8 @@ var hsp = {
 		hsp.ctx.fillStyle = color;
 		hsp.ctx.fillRect(0, 0, hsp.ginfo.winx, hsp.ginfo.winy);
 		hsp.ctx.restore();
+        hsp.x_ = 0;
+        hsp.y_ = 0;
 	},
 
 	getkey: function( k )
@@ -461,7 +465,12 @@ var hsp = {
 	mes: function( msg )
 	{
 		hsp.ctx.textBaseline = "top";
-        hsp.ctx.fillText(msg, hsp.x_, hsp.y_);
+		var lines = msg.split("\n");
+		for(var i = 0; i < lines.length; i++ )
+		{
+			hsp.ctx.fillText(lines[i], hsp.x_, hsp.y_);
+			hsp.y_ += hsp.fontsize_;
+		}
 	},
 
 	rnd: function( lim )
@@ -594,5 +603,59 @@ var hsp = {
 	{
 		f();
 	},
+
+	bsave: function( filename, data )
+	{
+		localStorage[filename] = JSON.stringify( data )
+	},
+
+	bload: function( filename )
+	{
+		var str = localStorage[filename]
+		if ( str === undefined )
+		{
+			return undefined
+		}
+		return JSON.parse( str )
+	}
+}
+
+
+var http = {
+	get: function( url )
+	{
+		var o = new XMLHttpRequest();
+		try {
+			o.open('GET', url, false);
+			o.send(null);
+		} catch(e) {
+			return "error"
+		}
+		return o.responseText;
+	},
+
+	request: function( url )
+	{
+		try {
+			var o = new XMLHttpRequest();
+			o.open('GET', url, true);
+			o.send(null);
+		} catch(e) {
+			return undefined
+		}
+		return o;
+	},
+
+	stat: function( req )
+	{
+		if (req === undefined ) return 0;
+		return req.readyState;
+	},
+
+	result: function( req )
+	{
+		if (req === undefined ) return "error";
+		return req.responseText;
+	}
 }
 
