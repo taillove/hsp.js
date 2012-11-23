@@ -231,7 +231,7 @@ var hsp = {
 
 	alpha: function( a )
 	{
-		hsp.ctx.globalAlpha = a / 256;
+		hsp.ctx.globalAlpha = Math.min( Math.max(a, 0), 256 ) / 256;
 	},
 
 	gmode: function( mode, w, h, a )
@@ -324,7 +324,14 @@ var hsp = {
 		hsp.ctx.translate(hsp.x_, hsp.y_);
 		hsp.ctx.rotate(rad);
 		hsp.ctx.translate(sx*-0.5, sy*-0.5);
-		hsp.ctx.drawImage( hsp.images_[id], u, v, u+hsp.w_, v+hsp.h_, 0, 0, sx, sy );
+		if( id>0 )
+		{
+			hsp.ctx.drawImage( hsp.images_[id], u, v, u+hsp.w_, v+hsp.h_, 0, 0, sx, sy );
+		}
+		else
+		{
+			hsp.ctx.fillRect( 0, 0, sx, sy );
+		}
 		hsp.ctx.restore();
 	},
 
@@ -333,7 +340,11 @@ var hsp = {
 		var colstr = 'rgb(' + ~~(r) + ',' + ~~(g) + ',' + ~~(b) + ')';
 		hsp.ctx.fillStyle = colstr;
 		hsp.ctx.strokeStyle = colstr;
-		if ( a !== undefined ) { hsp.ctx.globalAlpha = a / 256; }
+		if ( a !== undefined )
+		{
+			a = Math.min( Math.max(a, 0), 256 )
+			hsp.ctx.globalAlpha = a / 256; 
+		}
 	},
 
 	hsvcolor: function(h, s, v, a)
@@ -341,7 +352,7 @@ var hsp = {
 		v = Math.min( Math.max(v, 0), 255 );
 
 		if (h < 0) {
-			h = 192 - (~~(-h) % 192);
+			h = 191 - (~~(-h) % 192);
 		} else {
 			h = ~~(h) % 192;
 		}
@@ -352,7 +363,7 @@ var hsp = {
 		}
 		
 		s = Math.min( Math.max(s, 0), 255 ) / 255;
-		var i = (~~(h) / 32) % 6,
+		var i = ~~(h / 32) % 6,
 			f = (h / 32) - i,
 			p = v * (1 - s),
 			q = v * (1 - f * s),
@@ -398,28 +409,18 @@ var hsp = {
 
 	circle: function(x1, y1, x2, y2, f)
 	{
-		var hw = (x2 - x1) * 0.5;
-		var hh = (y2 - y1) * 0.5;
-		var cx = x1 + hw;
-		var cy = y1 + hh;
-		var cw = 0.5522847498308 * hw; // 0.552... =  (sqrt(2)-1) * 4 / 3
-		var ch = 0.5522847498308 * hh;
-
+		hsp.ctx.save();
+		hsp.ctx.translate( ( x1 + x2 ) * 0.5, ( y1 + y2 ) * 0.5 );
+		hsp.ctx.scale( x1 - x2 , y1 - y2 );
 		hsp.ctx.beginPath();
-		hsp.ctx.moveTo(cx, y1);
-		hsp.ctx.bezierCurveTo(cx + cw, y1,  x2, cy - ch,  x2, cy);
-		hsp.ctx.bezierCurveTo(x2, cy + ch,  cx + cw, y2,  cx, y2);
-		hsp.ctx.bezierCurveTo(cx - cw, y2,  x1, cy + ch,  x1, cy);
-		hsp.ctx.bezierCurveTo(x1, cy - ch,  cx - cw, y1,  cx, y1);
-		if ( f || (f === undefined) )
-		{
+		hsp.ctx.arc( 0, 0, 0.5, 0, 7, false );
+		if ( f || (f === undefined) ) {
 			hsp.ctx.fill();
-		}
-		else
-		{
+		} else {
 			hsp.ctx.closePath();
 			hsp.ctx.stroke();
 		}
+		hsp.ctx.restore();
 	},
 
 	cls: function( color, alpha )
@@ -476,6 +477,11 @@ var hsp = {
 	rnd: function( lim )
 	{
 		return ~~( Math.random() * lim );
+	},
+
+	rndf: function()
+	{
+		return Math.random();
 	},
 
 	objsize: function(x, y)
