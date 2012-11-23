@@ -409,12 +409,14 @@ var hsp = {
 
 	circle: function(x1, y1, x2, y2, f)
 	{
+		var r = Math.abs( x1 - x2 );
 		hsp.ctx.save();
 		hsp.ctx.translate( ( x1 + x2 ) * 0.5, ( y1 + y2 ) * 0.5 );
-		hsp.ctx.scale( x1 - x2 , y1 - y2 );
+		hsp.ctx.scale( 1.0, Math.abs( y1 - y2 ) / r );
 		hsp.ctx.beginPath();
-		hsp.ctx.arc( 0, 0, 0.5, 0, 7, false );
-		if ( f || (f === undefined) ) {
+		hsp.ctx.arc( 0, 0, r * 0.5, 0, 7, false );
+		if ( f || (f === undefined) )
+		{
 			hsp.ctx.fill();
 		} else {
 			hsp.ctx.closePath();
