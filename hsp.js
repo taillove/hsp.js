@@ -41,6 +41,8 @@ var hsp = {
 		r: false,
 	},
 	
+	touch: [],
+	
 	screen: function(id, w, h, color)
 	{
 		hsp.duration_ = 0;
@@ -52,6 +54,11 @@ var hsp = {
 		hsp.objh_ = 24;
 		hsp.maintimer_ = null;
 		hsp.mainfunc_ = null;
+
+		for( i=0; i<256; i++ )
+		{
+			hsp.key_[i] = false;
+		}
 
 		hsp.maindiv_ = document.getElementById(id);
 		hsp.maindiv_.width = w;
@@ -85,14 +92,6 @@ var hsp = {
 		hsp.maindiv_.appendChild( hsp.canvas_ );
 		hsp.images_[0] = hsp.canvas_;
 
-		// off-screen surface
-		hsp.buffer_ = document.createElement('canvas');
-		hsp.buffer_.ctx = hsp.buffer_.getContext('2d');
-		hsp.buffer_.width  = w;
-		hsp.buffer_.height = h;
-		hsp.buffer_.style.width  = w;
-		hsp.buffer_.style.height = h;
-
 		// direct drawing
 		hsp.ctx = hsp.canvas_.ctx;
 		hsp.font( "monospace", 16 );
@@ -113,7 +112,7 @@ var hsp = {
 			return false;
 		};
 		
-		window.onmousemove = function(e)
+		hsp.canvas_.onmousemove = function(e)
 		{
 			var rect = hsp.canvas_.getBoundingClientRect();
 			var posx = e.clientX;
@@ -126,7 +125,7 @@ var hsp = {
 			hsp.mouse.y = posy;
 		};
 
-		window.onmouseup = function(e)
+		hsp.canvas_.onmouseup = function(e)
 		{
 			switch(e.button)
 			{
@@ -136,56 +135,68 @@ var hsp = {
 			}
 		};
 
-		window.onresize = hsp.onresize_;
+		hsp.canvas_.onresize = hsp.onresize_;
 
-		for( i=0; i<256; i++ )
+		hsp.canvas_.onkeydown = function(e)
 		{
-			hsp.key_[i] = false;
-		}
-
-		window.onkeydown = function(event)
-		{
-			hsp.key_[event.keyCode] = true;
+			hsp.key_[e.keyCode] = true;
 			return true;
 		};
 		
-		window.onkeyup = function(event)
+		hsp.canvas_.onkeyup = function(e)
 		{
-			hsp.key_[event.keyCode] = false;
+			hsp.key_[e.keyCode] = false;
 			return true;
 		};
 
-		// for iPhone, iPad
-		hsp.canvas_.ontouchstart = function(event)
+		// for smartphones
+		touchfunc = function(e)
 		{
-			hsp.mouse.l = true;
-			event.preventDefault();
-			return false;
-		};
-
-		window.ontouchmove = function(event)
-		{
+			var numTouch = e.touches.length;
 			var rect = hsp.canvas_.getBoundingClientRect();
-			var posx = event.touches[0].pageX;
-			var posy = event.touches[0].pageY;
-			posx += document.documentElement.scrollLeft;
-			posy += document.documentElement.scrollTop;
-			posx -= rect.left;
-			posy -= rect.top;
-			hsp.mouse.x = posx;
-			hsp.mouse.y = posy;
-			event.preventDefault();
-			return false;
-		};
+			var ofsx = window.scrollX + rect.left;
+			var ofsy = window.scrollY + rect.top;
 
-		window.ontouchend = function(event)
-		{
-			event.preventDefault();
-			hsp.mouse.l = false;
-			return false;
+			hsp.touch.length = 0;
+			for( var cnt=0; cnt<numTouch; cnt++ )
+			{
+				var posx = e.touches[cnt].pageX - ofsx;
+				var posy = e.touches[cnt].pageY - ofsy;
+				hsp.touch.push( { x: posx, y: posy } );
+			}
+			hsp.mouse.x = hsp.touch[0].x;
+			hsp.mouse.y = hsp.touch[0].y;
+			hsp.mouse.l = numTouch;
+			e.preventDefault();
+		};
+		
+		hsp.canvas_.ontouchstart = touchfunc;
+		hsp.canvas_.ontouchmove = touchfunc;
+		hsp.canvas_.ontouchend = function(e) {
+			var numTouch = e.touches.length;
+			hsp.touch.length = numTouch;
+			hsp.mouse.l = numTouch;
+			e.preventDefault();
 		};
 	},
 
+	buffer: function(id, w, h, color)
+	{
+		var buf = document.createElement('canvas');
+		buf.ctx = buf.getContext('2d');
+		buf.width  = w;
+		buf.height = h;
+		buf.style.width  = w;
+		buf.style.height = h;
+		buf.style.cursor = 'default';
+		buf.style.margin = 'auto';
+		hsp.images_[id] = buf;
+	},
+	
+	gsel: function(id) {
+		hsp.ctx = hsp.images_[id].ctx;
+	},
+	
 	main_caller_: function()
 	{
 		// do something if needed
@@ -201,25 +212,6 @@ var hsp = {
 			hsp.mainfunc_ = f;
 			hsp.maintimer_ = setInterval( hsp.main_caller_, w );
 		}
-	},
-
-	redraw: function( type )
-	{
-/*
-		if ( type == 0 )
-		{
-			hsp.ctx = hsp.buffer_.ctx;
-			if ( hsp.last_redraw_ == 0 ) { return; }
-			hsp.buffer_.ctx.putImageData( hsp.canvas_.ctx.getImageData( 0, 0, hsp.ginfo.winx, hsp.ginfo.winy ), 0, 0 );
-		}
-		if ( type == 1 )
-		{
-			if ( hsp.last_redraw_ != 0 ) { return; }
-			hsp.canvas_.ctx.putImageData( hsp.buffer_.ctx.getImageData( 0, 0, hsp.ginfo.winx, hsp.ginfo.winy ), 0, 0 );
-			hsp.ctx = hsp.canvas_.ctx;
-		}
-		hsp.last_redraw_ = type;
-*/
 	},
 
 	picload: function( id, url )
@@ -335,6 +327,11 @@ var hsp = {
 		hsp.ctx.restore();
 	},
 
+	grect: function( u, v, rad, sx, sy )
+	{
+		hsp.grotate( -1, u, v, rad, sx, sy );
+	},
+	
 	color: function(r, g, b, a)
 	{
 		var colstr = 'rgb(' + ~~(r) + ',' + ~~(g) + ',' + ~~(b) + ')';
@@ -342,8 +339,7 @@ var hsp = {
 		hsp.ctx.strokeStyle = colstr;
 		if ( a !== undefined )
 		{
-			a = Math.min( Math.max(a, 0), 256 )
-			hsp.ctx.globalAlpha = a / 256; 
+			hsp.ctx.globalAlpha = Math.min( Math.max(a/256, 0), 1 );
 		}
 	},
 
@@ -484,6 +480,11 @@ var hsp = {
 	rndf: function()
 	{
 		return Math.random();
+	},
+	
+	distf: function(x, y)
+	{
+		return Math.sqrt(x*x+y*y)
 	},
 
 	objsize: function(x, y)

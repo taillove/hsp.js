@@ -25,6 +25,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // standard functions
 var boxf	= hsp.boxf;
+var buffer	= hsp.buffer;
 var button	= hsp.button;
 var bload	= hsp.bload;
 var bsave	= hsp.bsave;
@@ -33,14 +34,17 @@ var circle	= hsp.circle;
 var clrobj	= hsp.clrobj;
 var cls		= hsp.cls;
 var color	= hsp.color;
+var distf	= hsp.distf;
 var hsvcolor= hsp.hsvcolor;
 var font	= hsp.font;
 var gcopy	= hsp.gcopy;
-var grotate	= hsp.grotate;
-var gsquare	= hsp.gsquare;
 var getkey	= hsp.getkey;
 var gmode	= hsp.gmode;
 var gosub	= hsp.gosub;
+var grect	= hsp.grect;
+var grotate	= hsp.grotate;
+var gsquare	= hsp.gsquare;
+var gsel		= hsp.gsel;
 var input	= hsp.input;
 var line	= hsp.line;
 var limit	= hsp.limit;
@@ -48,7 +52,6 @@ var limitf	= hsp.limitf;
 var mes		= hsp.mes;
 var mmload	= hsp.mmload;
 var mmplay	= hsp.mmplay;
-var mouse	= hsp.mouse;
 var objsize	= hsp.objsize;
 var pos		= hsp.pos;
 var picload	= hsp.picload;
@@ -58,13 +61,15 @@ var screen	= hsp.screen;
 
 // variables
 var ginfo	= hsp.ginfo;
+var mouse	= hsp.mouse;
+var touch	= hsp.touch;
 
 // math functions
 var sin		= Math.sin;
 var cos		= Math.cos;
 var tan		= Math.tan;
 var atan	= function(y, x) { return Math.atan2(x, y); }
-var sqrt	= Math.sqrt;
+var sqrt		= Math.sqrt;
 var int		= parseInt;
 var double	= parseFloat;
 
