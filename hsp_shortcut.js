@@ -31,6 +31,7 @@ var bload	= hsp.bload;
 var bsave	= hsp.bsave;
 var chkbox	= hsp.chkbox;
 var circle	= hsp.circle;
+var circler	= hsp.circler;
 var clrobj	= hsp.clrobj;
 var cls		= hsp.cls;
 var color	= hsp.color;
@@ -63,6 +64,7 @@ var screen	= hsp.screen;
 var ginfo	= hsp.ginfo;
 var mouse	= hsp.mouse;
 var touch	= hsp.touch;
+var sensor	= hsp.sensor;
 
 // math functions
 var sin		= Math.sin;

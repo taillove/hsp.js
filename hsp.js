@@ -32,10 +32,16 @@ var hsp = {
 		winx: 0,
 		winy: 0,
 	},
+	
+	sensor: {
+		gravity: { x: 0, y: 0, z: 0 },
+		accel: { x: 0, y: 0, z: 0 },
+		rotation: { x: 0, y: 0, z: 0 },
+	},
 
 	mouse: {
-		x: null,
-		y: null,
+		x: 0,
+		y: 0,
 		l: false,
 		m: false,
 		r: false,
@@ -45,7 +51,6 @@ var hsp = {
 	
 	screen: function(id, w, h, color)
 	{
-		hsp.duration_ = 0;
 		hsp.x_ = 0;
 		hsp.y_ = 0;
 		hsp.w_ = 32;
@@ -90,10 +95,10 @@ var hsp = {
 		hsp.canvas_.style.cursor = 'default';
 		hsp.canvas_.style.margin = 'auto';
 		hsp.maindiv_.appendChild( hsp.canvas_ );
-		hsp.images_[0] = hsp.canvas_;
 
-		// direct drawing
+		hsp.images_[0] = hsp.canvas_;
 		hsp.ctx = hsp.canvas_.ctx;
+		hsp.id_ = 0;
 		hsp.font( "monospace", 16 );
 
 		if ( color === undefined ) { color = 'white'; }
@@ -104,9 +109,9 @@ var hsp = {
 		{
 			switch(e.button)
 			{
-				case 0: hsp.mouse.l = true; break;
-				case 1: hsp.mouse.m = true; break;
-				case 2: hsp.mouse.r = true; break;
+				case 0: hsp.mouse.l = 1; break;
+				case 1: hsp.mouse.m = 1; break;
+				case 2: hsp.mouse.r = 1; break;
 			}
 			// prevent selection on canvas
 			return false;
@@ -129,21 +134,21 @@ var hsp = {
 		{
 			switch(e.button)
 			{
-				case 0: hsp.mouse.l = false; break;
-				case 1: hsp.mouse.m = false; break;
-				case 2: hsp.mouse.r = false; break;
+				case 0: hsp.mouse.l = 0; break;
+				case 1: hsp.mouse.m = 0; break;
+				case 2: hsp.mouse.r = 0; break;
 			}
 		};
 
 		hsp.canvas_.onresize = hsp.onresize_;
 
-		hsp.canvas_.onkeydown = function(e)
+		window.onkeydown = function(e)
 		{
 			hsp.key_[e.keyCode] = true;
 			return true;
 		};
 		
-		hsp.canvas_.onkeyup = function(e)
+		window.onkeyup = function(e)
 		{
 			hsp.key_[e.keyCode] = false;
 			return true;
@@ -178,35 +183,52 @@ var hsp = {
 			hsp.mouse.l = numTouch;
 			e.preventDefault();
 		};
+	
+		window.ondevicemotion = function(e) {
+			hsp.sensor.gravity = e.accelerationIncludingGravity;
+			hsp.sensor.accel = e.acceleration;
+			hsp.sensor.rotation.x = e.rotationRate.alpha;
+			hsp.sensor.rotation.y = e.rotationRate.beta;
+			hsp.sensor.rotation.z = e.rotationRate.gamma;
+		};
+
 	},
 
 	buffer: function(id, w, h, color)
 	{
+		if ( w === undefined ) w = 1;
+		if ( h === undefined ) h = 1;
 		var buf = document.createElement('canvas');
 		buf.ctx = buf.getContext('2d');
 		buf.width  = w;
 		buf.height = h;
-		buf.style.width  = w;
-		buf.style.height = h;
-		buf.style.cursor = 'default';
-		buf.style.margin = 'auto';
 		hsp.images_[id] = buf;
+		hsp.gsel(id);
 	},
 	
-	gsel: function(id) {
-		hsp.ctx = hsp.images_[id].ctx;
+	gsel: function(id)
+	{
+		var img = hsp.images_[id];
+		hsp.id_ = id;
+		hsp.ctx = img.ctx;
+		hsp.ginfo.winx = img.width;
+		hsp.ginfo.winy = img.height;	
 	},
 	
 	main_caller_: function()
 	{
 		// do something if needed
-		hsp.mainfunc_();
+		try {
+			hsp.mainfunc_();
+		} catch(e) {
+			clearInterval(hsp.maintimer_);
+			alert( e.message );
+		}
 	},
 
 	setmain: function( f, w )
 	{
 		clearInterval(hsp.maintimer_);
-		hsp.duration_ = w;
 		if ( f !== undefined )
 		{
 			hsp.mainfunc_ = f;
@@ -214,11 +236,32 @@ var hsp = {
 		}
 	},
 
-	picload: function( id, url )
+	picload: function( url, ow )
 	{
+		// latch states
+		var dest = hsp.images_[hsp.id_];
 		var img = new Image();
+		var x = hsp.x_;
+		var y = hsp.y_;
+
+		var cbfunc = function()
+		{
+			if ( ( ow === undefined ) || ( ow == 0 ) )
+			{
+				dest.width  = img.width;
+				dest.height = img.height;
+				x = 0;
+				y = 0;
+			}
+			dest.ctx.drawImage( img, x, y );
+		}
+
 		img.src = url;
-		hsp.images_[id] = img;
+		img.onload = cbfunc;
+		if( img.complete )
+		{
+			cbfunc();
+		}
 	},
 
 	alpha: function( a )
@@ -327,9 +370,14 @@ var hsp = {
 		hsp.ctx.restore();
 	},
 
-	grect: function( u, v, rad, sx, sy )
+	grect: function( x, y, rad, sx, sy )
 	{
-		hsp.grotate( -1, u, v, rad, sx, sy );
+		hsp.ctx.save();
+		hsp.ctx.translate( x, y );
+		hsp.ctx.rotate(rad);
+		hsp.ctx.translate(sx*-0.5, sy*-0.5);
+		hsp.ctx.fillRect( 0, 0, sx, sy );
+		hsp.ctx.restore();
 	},
 	
 	color: function(r, g, b, a)
@@ -409,8 +457,14 @@ var hsp = {
 		hsp.ctx.save();
 		hsp.ctx.translate( ( x1 + x2 ) * 0.5, ( y1 + y2 ) * 0.5 );
 		hsp.ctx.scale( 1.0, Math.abs( y1 - y2 ) / r );
+		hsp.circler( 0, 0, r*0.5, f )
+		hsp.ctx.restore();
+	},
+	
+	circler: function( x, y, r, f )
+	{
 		hsp.ctx.beginPath();
-		hsp.ctx.arc( 0, 0, r * 0.5, 0, 7, false );
+		hsp.ctx.arc( x, y, r, 0, 7, false );
 		if ( f || (f === undefined) )
 		{
 			hsp.ctx.fill();
@@ -418,7 +472,6 @@ var hsp = {
 			hsp.ctx.closePath();
 			hsp.ctx.stroke();
 		}
-		hsp.ctx.restore();
 	},
 
 	cls: function( color, alpha )
