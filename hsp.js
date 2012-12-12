@@ -60,6 +60,7 @@ var hsp = {
 		hsp.maintimer_ = null;
 		hsp.mainfunc_ = null;
 		hsp.maincnt_ = 0;
+		hsp.enableSound = true;
 
 		for( i=0; i<256; i++ )
 		{
@@ -643,6 +644,7 @@ var hsp = {
 
 	mmload: function( file, id, flag )
 	{
+		if ( !hsp.enableSound ) return;
 		var a = new Audio(file);
 		if ( flag & 1 ) { a.loop = true; }
 		hsp.mmslot_[id] = a;
@@ -651,6 +653,7 @@ var hsp = {
 
 	mmplay: function( id )
 	{
+		if ( !hsp.enableSound ) return;
 		var se = hsp.mmslot_[id];
 		se.play();
 		hsp.mmslot_[id] = new Audio( se.src );
