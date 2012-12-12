@@ -31,11 +31,9 @@ var bload	= hsp.bload;
 var bsave	= hsp.bsave;
 var chkbox	= hsp.chkbox;
 var circle	= hsp.circle;
-var circler	= hsp.circler;
 var clrobj	= hsp.clrobj;
 var cls		= hsp.cls;
 var color	= hsp.color;
-var distf	= hsp.distf;
 var hsvcolor= hsp.hsvcolor;
 var font	= hsp.font;
 var gcopy	= hsp.gcopy;
@@ -56,7 +54,7 @@ var mmplay	= hsp.mmplay;
 var objsize	= hsp.objsize;
 var pos		= hsp.pos;
 var picload	= hsp.picload;
-var redraw	= hsp.redraw;
+//var redraw	= hsp.redraw;
 var rnd		= hsp.rnd;
 var screen	= hsp.screen;
 
@@ -67,6 +65,7 @@ var touch	= hsp.touch;
 var sensor	= hsp.sensor;
 
 // math functions
+var abs		= Math.abs;
 var sin		= Math.sin;
 var cos		= Math.cos;
 var tan		= Math.tan;
@@ -78,5 +77,7 @@ var double	= parseFloat;
 // original functions
 var alpha	= hsp.alpha;
 var setmain	= hsp.setmain;
+var circler	= hsp.circler;
+var distf	= hsp.distf;
 
 

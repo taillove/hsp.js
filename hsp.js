@@ -59,6 +59,7 @@ var hsp = {
 		hsp.objh_ = 24;
 		hsp.maintimer_ = null;
 		hsp.mainfunc_ = null;
+		hsp.maincnt_ = 0;
 
 		for( i=0; i<256; i++ )
 		{
@@ -219,7 +220,8 @@ var hsp = {
 	{
 		// do something if needed
 		try {
-			hsp.mainfunc_();
+			hsp.mainfunc_(hsp.maincnt_);
+			hsp.maincnt_++;
 		} catch(e) {
 			clearInterval(hsp.maintimer_);
 			alert( e.message );
@@ -233,6 +235,7 @@ var hsp = {
 		{
 			hsp.mainfunc_ = f;
 			hsp.maintimer_ = setInterval( hsp.main_caller_, w );
+			hsp.maincnt_ = 0;
 		}
 	},
 
@@ -294,6 +297,7 @@ var hsp = {
 			w = hsp.w_;
 			h = hsp.h_;
 		}
+		if ( ( w <= 0 ) || ( h <= 0 ) ) return;
 		hsp.ctx.drawImage( hsp.images_[id], x, y, w, h, hsp.x_, hsp.y_, w, h);
 	},
 
@@ -647,8 +651,9 @@ var hsp = {
 
 	mmplay: function( id )
 	{
-		hsp.mmstop( id );
-		hsp.mmslot_[id].play();
+		var se = hsp.mmslot_[id];
+		se.play();
+		hsp.mmslot_[id] = new Audio( se.src );
 	},
 
 	mmstop: function( id )
