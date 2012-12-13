@@ -52,9 +52,10 @@ var mes		= hsp.mes;
 var mmload	= hsp.mmload;
 var mmplay	= hsp.mmplay;
 var objsize	= hsp.objsize;
-var pos		= hsp.pos;
 var picload	= hsp.picload;
-//var redraw	= hsp.redraw;
+var pget		= hsp.pget;
+var pos		= hsp.pos;
+var pset		= hsp.pset;
 var rnd		= hsp.rnd;
 var screen	= hsp.screen;
 
@@ -79,5 +80,5 @@ var alpha	= hsp.alpha;
 var setmain	= hsp.setmain;
 var circler	= hsp.circler;
 var distf	= hsp.distf;
-
+var gencode	= hsp.gencode;
 

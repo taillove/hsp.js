@@ -31,11 +31,14 @@ var hsp = {
 	ginfo: {
 		winx: 0,
 		winy: 0,
+		r: 0,
+		g: 0,
+		b: 0,
 	},
 	
 	sensor: {
-		gravity: { x: 0, y: 0, z: 0 },
-		accel: { x: 0, y: 0, z: 0 },
+		gravity:  { x: 0, y: 0, z: 0 },
+		accel:    { x: 0, y: 0, z: 0 },
 		rotation: { x: 0, y: 0, z: 0 },
 	},
 
@@ -60,6 +63,8 @@ var hsp = {
 		hsp.maintimer_ = null;
 		hsp.mainfunc_ = null;
 		hsp.maincnt_ = 0;
+
+		hsp.errorAlert = true;		
 		hsp.enableSound = true;
 
 		for( i=0; i<256; i++ )
@@ -144,6 +149,15 @@ var hsp = {
 
 		hsp.canvas_.onresize = hsp.onresize_;
 
+		window.onerror = function(e, u, l)
+		{
+			if( hsp.errorAlert )
+			{
+				alert( u + "(" + l + "):\n" + e );
+				hsp.errorAlert = false;
+			}
+		};
+
 		window.onkeydown = function(e)
 		{
 			hsp.key_[e.keyCode] = true;
@@ -220,13 +234,8 @@ var hsp = {
 	main_caller_: function()
 	{
 		// do something if needed
-		try {
-			hsp.mainfunc_(hsp.maincnt_);
-			hsp.maincnt_++;
-		} catch(e) {
-			clearInterval(hsp.maintimer_);
-			alert( e.message );
-		}
+		hsp.mainfunc_(hsp.maincnt_);
+		hsp.maincnt_++;
 	},
 
 	setmain: function( f, w )
@@ -394,6 +403,9 @@ var hsp = {
 		{
 			hsp.ctx.globalAlpha = Math.min( Math.max(a/256, 0), 1 );
 		}
+		hsp.ginfo.r = r;
+		hsp.ginfo.g = g;
+		hsp.ginfo.b = b;
 	},
 
 	hsvcolor: function(h, s, v, a)
@@ -487,8 +499,8 @@ var hsp = {
 		hsp.ctx.fillStyle = color;
 		hsp.ctx.fillRect(0, 0, hsp.ginfo.winx, hsp.ginfo.winy);
 		hsp.ctx.restore();
-        hsp.x_ = 0;
-        hsp.y_ = 0;
+		hsp.x_ = 0;
+		hsp.y_ = 0;
 	},
 
 	getkey: function( k )
@@ -510,6 +522,21 @@ var hsp = {
 		if ( x2 === undefined ) { x2 = hsp.ginfo.winx-1; }
 		if ( y2 === undefined ) { y2 = hsp.ginfo.winy-1; }
 		hsp.ctx.fillRect(x1, y1, x2-x1+1, y2-y1+1);
+	},
+
+	pset: function( x, y )
+	{
+		if ( x === undefined ) { x = hsp.x_; }
+		if ( y === undefined ) { y = hsp.y_; }
+		hsp.x_ = x;
+		hsp.y_ = y;
+		hsp.ctx.fillRect(x, y, 1, 1);
+	},
+	
+	pget: function( x, y )
+	{
+		var t = hsp.ctx.getImageData( x, y, 1, 1 ).data;
+		hsp.color( t[0], t[1], t[2] );
 	},
 
 	font: function( name, size )
@@ -687,6 +714,11 @@ var hsp = {
 			return undefined
 		}
 		return JSON.parse( str )
+	},
+	
+	gencode: function( format )
+	{
+		return hsp.images_[ hsp.id_ ].toDataURL( format );
 	}
 }
 
