@@ -54,6 +54,11 @@ var hsp = {
 	
 	screen: function(id, w, h, color)
 	{
+		if( hsp.maintimer !== undefined )
+		{
+			clearInterval(hsp.maintimer_);
+		}
+
 		hsp.x_ = 0;
 		hsp.y_ = 0;
 		hsp.w_ = 32;
@@ -63,9 +68,11 @@ var hsp = {
 		hsp.maintimer_ = null;
 		hsp.mainfunc_ = null;
 		hsp.maincnt_ = 0;
+		hsp.iid = new Date();
 
 		hsp.errorAlert = true;		
 		hsp.enableSound = true;
+		hsp.loading = 0;
 
 		for( i=0; i<256; i++ )
 		{
@@ -89,10 +96,12 @@ var hsp = {
 		hsp.ginfo.winy = h;
 
 		// ui surface
+		if (hsp.ui_) hsp.maindiv_.removeChild(hsp.ui_);
 		hsp.ui_ = document.createElement('div');
 		hsp.maindiv_.appendChild(hsp.ui_);
 
 		// display surface
+		if (hsp.canvas_) hsp.maindiv_.removeChild(hsp.canvas_);
 		hsp.canvas_ = document.createElement('canvas');
 		hsp.canvas_.ctx = hsp.canvas_.getContext('2d');
 		hsp.canvas_.width  = w;
@@ -256,9 +265,11 @@ var hsp = {
 		var img = new Image();
 		var x = hsp.x_;
 		var y = hsp.y_;
+		var iid = hsp.iid;
 
 		var cbfunc = function()
 		{
+			if ( iid != hsp.iid ) return;
 			if ( ( ow === undefined ) || ( ow == 0 ) )
 			{
 				dest.width  = img.width;
@@ -267,14 +278,17 @@ var hsp = {
 				y = 0;
 			}
 			dest.ctx.drawImage( img, x, y );
+			hsp.loading--;
 		}
 
+		hsp.loading++;
 		img.src = url;
-		img.onload = cbfunc;
-		if( img.complete )
-		{
+		if( img.complete ) {
 			cbfunc();
+		} else {
+			img.onload = cbfunc;
 		}
+		return img;
 	},
 
 	alpha: function( a )
@@ -349,6 +363,15 @@ var hsp = {
 			(x0 * c0  + x1 * c1  + x2 * c2 ) * invd,
 			(y0 * c0  + y1 * c1  + y2 * c2 ) * invd
 		);
+/*
+		var umin = Math.min( u0, u1, u2 );
+		var vmin = Math.min( v0, v1, v2 );
+		var umax = Math.max( u0, u1, u2 );
+		var vmax = Math.max( v0, v1, v2 );
+		var w = umax - umin;
+		var h = vmax - vmin;
+		hsp.ctx.drawImage(im, umin, vmin, w, h, umin, vmin, w, h);
+*/
 		hsp.ctx.drawImage(im, 0, 0);
 		hsp.ctx.restore();
 	},
@@ -672,7 +695,17 @@ var hsp = {
 	mmload: function( file, id, flag )
 	{
 		if ( !hsp.enableSound ) return;
+		var cbfunc = function() {
+			if ( iid != hsp.iid ) return;
+			hsp.loading--;
+		}
+		
 		var a = new Audio(file);
+		if( a.complete ) {
+			cbfunc();
+		} else {
+			a.onload = cbfunc;
+		}
 		if ( flag & 1 ) { a.loop = true; }
 		hsp.mmslot_[id] = a;
 		return a;
