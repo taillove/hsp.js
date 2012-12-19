@@ -79,7 +79,8 @@ var double	= parseFloat;
 var alpha	= hsp.alpha;
 var circler	= hsp.circler;
 var distf	= hsp.distf;
-var rndf		= hsp.rndf;
 var gencode	= hsp.gencode;
+var gerase	= hsp.gerase;
+var rndf		= hsp.rndf;
 var setmain	= hsp.setmain;
 

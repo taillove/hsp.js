@@ -34,6 +34,7 @@ var hsp = {
 		r: 0,
 		g: 0,
 		b: 0,
+		a: 0,
 	},
 	
 	sensor: {
@@ -94,6 +95,7 @@ var hsp = {
 
 		hsp.ginfo.winx = w;
 		hsp.ginfo.winy = h;
+		hsp.ginfo.a = 256;
 
 		// ui surface
 		if (hsp.ui_) hsp.maindiv_.removeChild(hsp.ui_);
@@ -293,25 +295,40 @@ var hsp = {
 
 	alpha: function( a )
 	{
-		hsp.ctx.globalAlpha = Math.min( Math.max(a, 0), 256 ) / 256;
+		if ( a !== undefined )
+		{
+			var ia = Math.min( Math.max(~~a, 0), 255 );
+			hsp.ctx.globalAlpha = ia / 255;
+			hsp.ginfo.a = ia;
+		}
 	},
 
 	gmode: function( mode, w, h, a )
 	{
 		switch( mode )
 		{
-			case 0: mode = 'copy'; break; // warning: undesired clipping. use only with gcopy.
+			case 0: mode = 'copy'; break; // warning: only with gcopy.
 			case 1: mode = 'source-over'; break;
 			case 2: mode = 'source-over'; break;
 			case 3: mode = 'source-over'; break;
 			case 4: mode = 'source-over'; break;
 			case 5: mode = 'lighter'; break;
 			case 6: mode = 'darker'; break;
+			case -1: mode = 'destination-out'; break;
 		}
 		hsp.ctx.globalCompositeOperation = mode;
 		if ( w !== undefined ) { hsp.w_ = w; }
 		if ( h !== undefined ) { hsp.h_ = h; }
-		if ( a !== undefined ) { hsp.ctx.globalAlpha = a / 256; }
+		hsp.alpha(a);
+	},
+	
+	gerase: function( x, y, w, h )
+	{
+		hsp.ctx.save();
+		hsp.ctx.globalCompositeOperation = 'destination-out';
+		hsp.ctx.globalAlpha = 1;
+		hsp.ctx.fillRect( x, y, w, h );
+		hsp.ctx.restore();
 	},
 
 	gcopy: function( id, x, y, w, h )
@@ -398,7 +415,7 @@ var hsp = {
 		hsp.ctx.translate(sx*-0.5, sy*-0.5);
 		if( id>0 )
 		{
-			hsp.ctx.drawImage( hsp.images_[id], u, v, u+hsp.w_, v+hsp.h_, 0, 0, sx, sy );
+			hsp.ctx.drawImage( hsp.images_[id], u, v, hsp.w_, hsp.h_, 0, 0, sx, sy );
 		}
 		else
 		{
@@ -422,13 +439,10 @@ var hsp = {
 		var colstr = 'rgb(' + ~~(r) + ',' + ~~(g) + ',' + ~~(b) + ')';
 		hsp.ctx.fillStyle = colstr;
 		hsp.ctx.strokeStyle = colstr;
-		if ( a !== undefined )
-		{
-			hsp.ctx.globalAlpha = Math.min( Math.max(a/256, 0), 1 );
-		}
 		hsp.ginfo.r = r;
 		hsp.ginfo.g = g;
 		hsp.ginfo.b = b;
+		hsp.alpha(a);
 	},
 
 	hsvcolor: function(h, s, v, a)
@@ -559,7 +573,7 @@ var hsp = {
 	pget: function( x, y )
 	{
 		var t = hsp.ctx.getImageData( x, y, 1, 1 ).data;
-		hsp.color( t[0], t[1], t[2] );
+		hsp.color( t[0], t[1], t[2], t[3] );
 	},
 
 	font: function( name, size )
