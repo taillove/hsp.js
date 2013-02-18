@@ -81,10 +81,8 @@ var hsp = {
 		}
 
 		hsp.maindiv_ = document.getElementById(id);
-		hsp.maindiv_.width = w;
-		hsp.maindiv_.height = h;
-		hsp.maindiv_.style.width = w;
-		hsp.maindiv_.style.height = h;
+		hsp.maindiv_.style.width = typeof(w) == 'number' ? w + 'px' : w;
+		hsp.maindiv_.style.height = typeof(h) == 'number' ? h + 'px' : h;
 		hsp.maindiv_.style.textAlign = 'left';
 		hsp.maindiv_.style.cursor = 'default';
 
@@ -108,8 +106,8 @@ var hsp = {
 		hsp.canvas_.ctx = hsp.canvas_.getContext('2d');
 		hsp.canvas_.width  = w;
 		hsp.canvas_.height = h;
-		hsp.canvas_.style.width  = w;
-		hsp.canvas_.style.height = h;
+		hsp.canvas_.style.width  = w + 'px';
+		hsp.canvas_.style.height = h + 'px';
 		hsp.canvas_.style.cursor = 'default';
 		hsp.canvas_.style.margin = 'auto';
 		hsp.maindiv_.appendChild( hsp.canvas_ );
