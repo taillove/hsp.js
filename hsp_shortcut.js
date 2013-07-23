@@ -43,7 +43,7 @@ var gosub	= hsp.gosub;
 var grect	= hsp.grect;
 var grotate	= hsp.grotate;
 var gsquare	= hsp.gsquare;
-var gsel		= hsp.gsel;
+var gsel	= hsp.gsel;
 var input	= hsp.input;
 var line	= hsp.line;
 var limit	= hsp.limit;
@@ -53,9 +53,9 @@ var mmload	= hsp.mmload;
 var mmplay	= hsp.mmplay;
 var objsize	= hsp.objsize;
 var picload	= hsp.picload;
-var pget		= hsp.pget;
+var pget	= hsp.pget;
 var pos		= hsp.pos;
-var pset		= hsp.pset;
+var pset	= hsp.pset;
 var rnd		= hsp.rnd;
 var screen	= hsp.screen;
 
@@ -71,16 +71,19 @@ var sin		= Math.sin;
 var cos		= Math.cos;
 var tan		= Math.tan;
 var atan	= function(y, x) { return Math.atan2(x, y); }
-var sqrt		= Math.sqrt;
+var sqrt	= Math.sqrt;
 var int		= parseInt;
 var double	= parseFloat;
 
 // original functions
 var alpha	= hsp.alpha;
+var bdelete	= hsp.bdelete;
+var bexist	= hsp.bexist;
 var circler	= hsp.circler;
 var distf	= hsp.distf;
 var gencode	= hsp.gencode;
 var gerase	= hsp.gerase;
-var rndf		= hsp.rndf;
+var rectf	= hsp.rectf;
+var rndf	= hsp.rndf;
 var setmain	= hsp.setmain;
 

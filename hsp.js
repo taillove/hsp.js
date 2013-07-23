@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012 MIA
+Copyright (c) 2012-2013 MIA
 
 (MIT license)
 
@@ -31,10 +31,13 @@ var hsp = {
 	ginfo: {
 		winx: 0,
 		winy: 0,
+		cx: 0,
+		cy: 0,
 		r: 0,
 		g: 0,
 		b: 0,
-		a: 0
+		a: 0,
+		sel: 0
 	},
 	
 	sensor: {
@@ -60,8 +63,6 @@ var hsp = {
 			clearInterval(hsp.maintimer_);
 		}
 
-		hsp.x_ = 0;
-		hsp.y_ = 0;
 		hsp.w_ = 32;
 		hsp.h_ = 32;
 		hsp.objw_ = 64;
@@ -70,6 +71,7 @@ var hsp = {
 		hsp.mainfunc_ = null;
 		hsp.maincnt_ = 0;
 		hsp.iid = new Date();
+		hsp.zoom_ = 1;
 
 		hsp.errorAlert = true;		
 		hsp.enableSound = true;
@@ -85,7 +87,6 @@ var hsp = {
 		hsp.maindiv_.style.height = typeof(h) == 'number' ? h + 'px' : h;
 		hsp.maindiv_.style.textAlign = 'left';
 		hsp.maindiv_.style.cursor = 'default';
-
 		// set ginfo
 		var rect = hsp.maindiv_.getBoundingClientRect();
 		w = rect.right - rect.left;
@@ -93,7 +94,7 @@ var hsp = {
 
 		hsp.ginfo.winx = w;
 		hsp.ginfo.winy = h;
-		hsp.ginfo.a = 256;
+		hsp.ginfo.a = 255;
 
 		// ui surface
 		if (hsp.ui_) hsp.maindiv_.removeChild(hsp.ui_);
@@ -114,7 +115,7 @@ var hsp = {
 
 		hsp.images_[0] = hsp.canvas_;
 		hsp.ctx = hsp.canvas_.ctx;
-		hsp.id_ = 0;
+		hsp.ginfo.sel = 0;
 		hsp.font( "monospace", 16 );
 
 		if ( color === undefined ) { color = 'white'; }
@@ -142,8 +143,8 @@ var hsp = {
 			posy += document.documentElement.scrollTop;
 			posx -= rect.left;
 			posy -= rect.top;
-			hsp.mouse.x = posx;
-			hsp.mouse.y = posy;
+			hsp.mouse.x = posx / hsp.zoom_;
+			hsp.mouse.y = posy / hsp.zoom_;
 		};
 
 		hsp.canvas_.onmouseup = function(e)
@@ -194,8 +195,8 @@ var hsp = {
 				var posy = e.touches[cnt].pageY - ofsy;
 				hsp.touch.push( { x: posx, y: posy } );
 			}
-			hsp.mouse.x = hsp.touch[0].x;
-			hsp.mouse.y = hsp.touch[0].y;
+			hsp.mouse.x = hsp.touch[0].x / hsp.zoom_;
+			hsp.mouse.y = hsp.touch[0].y / hsp.zoom_;
 			hsp.mouse.l = numTouch;
 			e.preventDefault();
 		};
@@ -212,11 +213,24 @@ var hsp = {
 		window.ondevicemotion = function(e) {
 			hsp.sensor.gravity = e.accelerationIncludingGravity;
 			hsp.sensor.accel = e.acceleration;
-			hsp.sensor.rotation.x = e.rotationRate.alpha;
-			hsp.sensor.rotation.y = e.rotationRate.beta;
-			hsp.sensor.rotation.z = e.rotationRate.gamma;
+			if ( e.rotationRate )
+			{
+				hsp.sensor.rotation.x = e.rotationRate.alpha;
+				hsp.sensor.rotation.y = e.rotationRate.beta;
+				hsp.sensor.rotation.z = e.rotationRate.gamma;
+			}
 		};
-
+	},
+	
+	scrzoom: function( z )
+	{
+		var w = hsp.ginfo.winx;
+		var h = hsp.ginfo.winy;
+		hsp.maindiv_.style.width = w * z;
+		hsp.maindiv_.style.height = h * z;
+		hsp.canvas_.style.width  = w * z;
+		hsp.canvas_.style.height = h * z;
+		hsp.zoom_ = z;
 	},
 
 	buffer: function(id, w, h, color)
@@ -234,7 +248,7 @@ var hsp = {
 	gsel: function(id)
 	{
 		var img = hsp.images_[id];
-		hsp.id_ = id;
+		hsp.ginfo.sel = id;
 		hsp.ctx = img.ctx;
 		hsp.ginfo.winx = img.width;
 		hsp.ginfo.winy = img.height;	
@@ -261,10 +275,10 @@ var hsp = {
 	picload: function( url, ow )
 	{
 		// latch states
-		var dest = hsp.images_[hsp.id_];
+		var dest = hsp.images_[hsp.ginfo.sel];
 		var img = new Image();
-		var x = hsp.x_;
-		var y = hsp.y_;
+		var x = hsp.ginfo.cx;
+		var y = hsp.ginfo.cy;
 		var iid = hsp.iid;
 
 		var cbfunc = function()
@@ -305,7 +319,7 @@ var hsp = {
 	{
 		switch( mode )
 		{
-			case 0: mode = 'copy'; break; // warning: only with gcopy.
+			case 0: mode = 'source-over'; break;
 			case 1: mode = 'source-over'; break;
 			case 2: mode = 'source-over'; break;
 			case 3: mode = 'source-over'; break;
@@ -322,6 +336,10 @@ var hsp = {
 	
 	gerase: function( x, y, w, h )
 	{
+		if ( x === undefined ) x = 0
+		if ( y === undefined ) y = 0
+		if ( w === undefined ) w = hsp.ginfo.winx
+		if ( h === undefined ) h = hsp.ginfo.winy
 		hsp.ctx.save();
 		hsp.ctx.globalCompositeOperation = 'destination-out';
 		hsp.ctx.globalAlpha = 1;
@@ -331,13 +349,11 @@ var hsp = {
 
 	gcopy: function( id, x, y, w, h )
 	{
-		if ( w === undefined )
-		{
-			w = hsp.w_;
-			h = hsp.h_;
-		}
+		if ( w === undefined ) w = hsp.w_;
+		if ( h === undefined ) h = hsp.h_;
 		if ( ( w <= 0 ) || ( h <= 0 ) ) return;
-		hsp.ctx.drawImage( hsp.images_[id], x, y, w, h, hsp.x_, hsp.y_, w, h);
+		hsp.ctx.drawImage( hsp.images_[id],
+			x, y, w, h, hsp.ginfo.cx, hsp.ginfo.cy, w, h);
 	},
 
 	fillTriangle_: function( x0, y0, x1, y1, x2, y2 )
@@ -398,8 +414,12 @@ var hsp = {
 			hsp.fillTriangle_( xs[0], ys[0], xs[1], ys[1], xs[2], ys[2] );
 			hsp.fillTriangle_( xs[0], ys[0], xs[2], ys[2], xs[3], ys[3] );
 		} else {
-			hsp.fillTexTriangle_( hsp.images_[id], xs[0], ys[0], xs[1], ys[1], xs[2], ys[2], us[0], vs[0], us[1], vs[1], us[2], vs[2] );
-			hsp.fillTexTriangle_( hsp.images_[id], xs[0], ys[0], xs[2], ys[2], xs[3], ys[3], us[0], vs[0], us[2], vs[2], us[3], vs[3] );
+			hsp.fillTexTriangle_( hsp.images_[id],
+				xs[0], ys[0], xs[1], ys[1], xs[2], ys[2],
+				us[0], vs[0], us[1], vs[1], us[2], vs[2] );
+			hsp.fillTexTriangle_( hsp.images_[id],
+				xs[0], ys[0], xs[2], ys[2], xs[3], ys[3],
+				us[0], vs[0], us[2], vs[2], us[3], vs[3] );
 		}
 	},
 
@@ -408,7 +428,7 @@ var hsp = {
 		if ( sx === undefined ) { sx = hsp.w_; }
 		if ( sy === undefined ) { sy = hsp.h_; }
 		hsp.ctx.save();
-		hsp.ctx.translate(hsp.x_, hsp.y_);
+		hsp.ctx.translate(hsp.ginfo.cx, hsp.ginfo.cy);
 		hsp.ctx.rotate(rad);
 		hsp.ctx.translate(sx*-0.5, sy*-0.5);
 		if( id>0 )
@@ -478,8 +498,8 @@ var hsp = {
 
 	pos: function(x, y)
 	{
-		hsp.x_ = x;
-		hsp.y_ = y;
+		hsp.ginfo.cx = x;
+		hsp.ginfo.cy = y;
 	},
 
 	line: function( x1, y1, x2, y2 )
@@ -489,15 +509,15 @@ var hsp = {
 		{
 			hsp.ctx.moveTo(x1, y1);
 			hsp.ctx.lineTo(x2, y2);
-			hsp.x_ = x2;
-			hsp.y_ = y2;
+			hsp.ginfo.cx = x2;
+			hsp.ginfo.cy = y2;
 		}
 		else
 		{
-			hsp.ctx.moveTo(hsp.x_, hsp.y_);
+			hsp.ctx.moveTo(hsp.ginfo.cx, hsp.ginfo.cy);
 			hsp.ctx.lineTo(x1, y1);
-			hsp.x_ = x1;
-			hsp.y_ = y1;
+			hsp.ginfo.cx = x1;
+			hsp.ginfo.cy = y1;
 		}
 		hsp.ctx.closePath();
 		hsp.ctx.stroke();
@@ -534,8 +554,8 @@ var hsp = {
 		hsp.ctx.fillStyle = color;
 		hsp.ctx.fillRect(0, 0, hsp.ginfo.winx, hsp.ginfo.winy);
 		hsp.ctx.restore();
-		hsp.x_ = 0;
-		hsp.y_ = 0;
+		hsp.ginfo.cx = 0;
+		hsp.ginfo.cy = 0;
 	},
 
 	getkey: function( k )
@@ -559,12 +579,17 @@ var hsp = {
 		hsp.ctx.fillRect(x1, y1, x2-x1+1, y2-y1+1);
 	},
 
+	rectf: function( x, y, w, h )
+	{
+		hsp.ctx.fillRect(x, y, w, h);
+	},
+
 	pset: function( x, y )
 	{
-		if ( x === undefined ) { x = hsp.x_; }
-		if ( y === undefined ) { y = hsp.y_; }
-		hsp.x_ = x;
-		hsp.y_ = y;
+		if ( x === undefined ) { x = hsp.ginfo.cx; }
+		if ( y === undefined ) { y = hsp.ginfo.cy; }
+		hsp.ginfo.cx = x;
+		hsp.ginfo.cy = y;
 		hsp.ctx.fillRect(x, y, 1, 1);
 	},
 	
@@ -587,8 +612,8 @@ var hsp = {
 		var lines = msg.split("\n");
 		for(var i = 0; i < lines.length; i++ )
 		{
-			hsp.ctx.fillText(lines[i], hsp.x_, hsp.y_);
-			hsp.y_ += hsp.fontsize_;
+			hsp.ctx.fillText(lines[i], hsp.ginfo.cx, hsp.ginfo.cy);
+			hsp.ginfo.cy += hsp.fontsize_;
 		}
 	},
 
@@ -681,14 +706,14 @@ var hsp = {
 			var rect = hsp.ui_.getBoundingClientRect();
 			elem.style.display	= 'block';
 			elem.style.position	= 'absolute';
-			elem.style.left		= hsp.x_ + rect.left;
-			elem.style.top		= hsp.y_ + rect.top;
+			elem.style.left		= hsp.ginfo.cx + rect.left;
+			elem.style.top		= hsp.ginfo.cy + rect.top;
 			elem.style.width	= hsp.objw_;
 			elem.style.height	= hsp.objh_;
-			elem.ox = hsp.x_;
-			elem.oy = hsp.y_;
+			elem.ox = hsp.ginfo.cx;
+			elem.oy = hsp.ginfo.cy;
 			hsp.ui_.appendChild(elem);
-			hsp.y_ += hsp.objh_;
+			hsp.ginfo.cy += hsp.objh_;
 		}
 	},
 
@@ -761,9 +786,19 @@ var hsp = {
 		return JSON.parse( str )
 	},
 	
+	bexist: function( filename )
+	{
+		return ( undefined !== localStorage[filename] )
+	},
+	
+	bdelete: function( filename )
+	{
+		delete(localStorage[filename])
+	},
+	
 	gencode: function( format )
 	{
-		return hsp.images_[ hsp.id_ ].toDataURL( format );
+		return hsp.images_[ hsp.ginfo.sel ].toDataURL( format );
 	}
 }
 
