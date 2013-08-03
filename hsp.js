@@ -354,13 +354,18 @@ var hsp = {
 		hsp.ctx.restore();
 	},
 
-	gcopy: function( id, x, y, w, h )
+	gzoom: function( dx, dy, id, x, y, w, h )
 	{
 		if ( w === undefined ) w = hsp.w_;
 		if ( h === undefined ) h = hsp.h_;
 		if ( ( w <= 0 ) || ( h <= 0 ) ) return;
 		hsp.ctx.drawImage( hsp.images_[id],
-			x, y, w, h, hsp.ginfo.cx, hsp.ginfo.cy, w, h);
+			x, y, w, h, hsp.ginfo.cx, hsp.ginfo.cy, dx, dy);
+	},
+
+	gcopy: function( id, x, y, w, h )
+	{
+		hsp.gzoom( w, h, id, x, y, w, h );
 	},
 
 	fillTriangle_: function( x0, y0, x1, y1, x2, y2 )

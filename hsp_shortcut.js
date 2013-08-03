@@ -45,6 +45,7 @@ var grect	= hsp.grect;
 var grotate	= hsp.grotate;
 var gsquare	= hsp.gsquare;
 var gsel	= hsp.gsel;
+var gzoom	= hsp.gzoom;
 var input	= hsp.input;
 var line	= hsp.line;
 var limit	= hsp.limit;
