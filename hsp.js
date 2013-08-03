@@ -272,7 +272,7 @@ var hsp = {
 		}
 	},
 
-	picload: function( url, ow )
+	picload: function( url, ow, cb )
 	{
 		// latch states
 		var dest = hsp.images_[hsp.ginfo.sel];
@@ -291,7 +291,14 @@ var hsp = {
 				x = 0;
 				y = 0;
 			}
-			dest.ctx.drawImage( img, x, y );
+			if ( cb )
+			{
+				cb( dest.ctx, img, x, y );
+			}
+			else
+			{
+				dest.ctx.drawImage( img, x, y );
+			}
 			hsp.loading--;
 		}
 
@@ -576,6 +583,15 @@ var hsp = {
 		if ( y1 === undefined ) { y1 = 0; }
 		if ( x2 === undefined ) { x2 = hsp.ginfo.winx-1; }
 		if ( y2 === undefined ) { y2 = hsp.ginfo.winy-1; }
+		hsp.ctx.fillRect(x1, y1, x2-x1+1, y2-y1+1);
+	},
+	
+	gradf: function( x1, y1, x2, y2, mode, c1, c2 )
+	{
+		var g = hsp.ctx.createLinearGradient(mode ? 0 : x1, mode ? y1 : 0, mode ? 0 : x2, mode ? y2 : 0);
+		g.addColorStop(0, c1);
+		g.addColorStop(1, c2);
+		hsp.ctx.fillStyle = g;
 		hsp.ctx.fillRect(x1, y1, x2-x1+1, y2-y1+1);
 	},
 

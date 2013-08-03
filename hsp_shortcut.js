@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012 MIA
+Copyright (c) 2012-2013 MIA
 
 (MIT license)
 
@@ -40,6 +40,7 @@ var gcopy	= hsp.gcopy;
 var getkey	= hsp.getkey;
 var gmode	= hsp.gmode;
 var gosub	= hsp.gosub;
+var gradf	= hsp.gradf;
 var grect	= hsp.grect;
 var grotate	= hsp.grotate;
 var gsquare	= hsp.gsquare;
