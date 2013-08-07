@@ -620,11 +620,14 @@ var hsp = {
 		hsp.color( t[0], t[1], t[2], t[3] );
 	},
 
-	font: function( name, size )
+	font: function( name, size, attr )
 	{
+		var fstr = "";
+		if ( attr & 1 ) fstr += "bold ";
+		if ( attr & 2 ) fstr += "italic ";
 		hsp.fontsize_ = size;
 		hsp.fontface_ = name;
-		hsp.ctx.font = size + "px " + name;
+		hsp.ctx.font = fstr + " " + size + "px '" + name + "'";
 	},
 
 	mes: function( msg )
